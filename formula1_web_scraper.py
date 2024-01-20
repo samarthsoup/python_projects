@@ -23,6 +23,26 @@ def get_constructors_championship(year):
     else:
         return f"no data available for the year {year}"
     
+def get_constructor_at_position(year, position):
+    url = f'https://www.formula1.com/en/results.html/{year}/team.html'
+    response = requests.get(url)
+    content = response.content
+    soup = BeautifulSoup(content, 'html.parser')
+    table = soup.find('table', class_='resultsarchive-table')
+
+    if table:
+        try:
+            row = table.find_all('tr')[position]  
+            data = [cell.get_text(strip=True) for cell in row.find_all('td')]
+            return {
+                'team': data[2],
+                'points': int(data[3])
+            }
+        except IndexError:
+            return f"no driver data available for position {position} in the year {year}"
+    else:
+        return f"no data available for the year {year}"
+    
 def get_drivers_championship(year):
     url = f'https://www.formula1.com/en/results.html/{year}/drivers.html'
     response = requests.get(url)
@@ -83,7 +103,6 @@ def get_driver_at_position(year, position):
             full_name = ' '.join(part.get_text(strip=True) for part in name_parts)
             points = row.find_all('td')[5].get_text(strip=True)  
             return {
-                'position': position,
                 'driver': full_name,
                 'points': int(points)
             }
@@ -129,5 +148,13 @@ while True:
             pos = int(parts[3])
             driver = get_driver_at_position(year, pos)
             print(f"{driver['driver']}")
+        except ValueError:
+            print("enter valid year")
+    elif len(parts) == 4 and parts[0].lower() == 's' and parts[1].lower() == 'c':
+        try:
+            year = int(parts[2])
+            pos = int(parts[3])
+            constructor = get_constructor_at_position(year, pos)
+            print(f"{constructor['team']}")
         except ValueError:
             print("enter valid year")
